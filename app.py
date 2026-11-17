@@ -5,68 +5,126 @@ import re
 from datetime import date, timedelta, datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 app.secret_key = os.environ.get(
     "SECRET_KEY",
     "noticemate-local-development-key"
 )
+
+class PostgreSQLConnection:
+    def __init__(self, connection):
+        self.connection = connection
+
+    def execute(self, query, parameters=()):
+        query = query.replace("?", "%s")
+        cursor = self.connection.cursor()
+        cursor.execute(query, parameters)
+        return cursor
+
+    def commit(self):
+        self.connection.commit()
+
+    def close(self):
+        self.connection.close()
+
 def get_db():
+    database_url = os.environ.get("DATABASE_URL")
+
+    if database_url:
+        conn = psycopg2.connect(
+            database_url,
+            cursor_factory=RealDictCursor
+        )
+        return PostgreSQLConnection(conn)
+
     conn = sqlite3.connect("notices.db")
     conn.row_factory = sqlite3.Row
     return conn
 
 
+
 def create_table():
     conn = get_db()
 
-    # Create students table
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS students (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
-        )
-    """)
+    if isinstance(conn, PostgreSQLConnection):
 
-    # Create notices table
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS notices (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            description TEXT NOT NULL,
-            category TEXT NOT NULL,
-            deadline TEXT,
-            student_id INTEGER
-        )
-    """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS students (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL
+            )
+        """)
 
-    # Create reminders table
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS reminders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            notice_id INTEGER NOT NULL,
-            reminder_date TEXT NOT NULL,
-            notified INTEGER DEFAULT 0,
-            FOREIGN KEY (notice_id) REFERENCES notices(id)
-        )
-    """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS notices (
+                id SERIAL PRIMARY KEY,
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                category TEXT NOT NULL,
+                deadline TEXT,
+                student_id INTEGER
+            )
+        """)
 
-    # Check whether notices table has student_id
-    columns = [
-        column["name"]
-        for column in conn.execute(
-            "PRAGMA table_info(notices)"
-        ).fetchall()
-    ]
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS reminders (
+                id SERIAL PRIMARY KEY,
+                notice_id INTEGER NOT NULL,
+                reminder_date TEXT NOT NULL,
+                notified INTEGER DEFAULT 0,
+                FOREIGN KEY (notice_id) REFERENCES notices(id)
+            )
+        """)
 
-    if "student_id" not in columns:
-        conn.execute(
-            "ALTER TABLE notices ADD COLUMN student_id INTEGER"
-        )
+    else:
 
-    # Assign existing notices to the first registered student
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS students (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL
+            )
+        """)
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS notices (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                category TEXT NOT NULL,
+                deadline TEXT,
+                student_id INTEGER
+            )
+        """)
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS reminders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                notice_id INTEGER NOT NULL,
+                reminder_date TEXT NOT NULL,
+                notified INTEGER DEFAULT 0,
+                FOREIGN KEY (notice_id) REFERENCES notices(id)
+            )
+        """)
+
+        columns = [
+            column["name"]
+            for column in conn.execute(
+                "PRAGMA table_info(notices)"
+            ).fetchall()
+        ]
+
+        if "student_id" not in columns:
+            conn.execute(
+                "ALTER TABLE notices ADD COLUMN student_id INTEGER"
+            )
+
     conn.execute("""
         UPDATE notices
         SET student_id = (
@@ -77,6 +135,7 @@ def create_table():
 
     conn.commit()
     conn.close()
+
 
 
 @app.route("/signup", methods=["GET", "POST"])
@@ -103,7 +162,7 @@ def signup():
             return redirect("/login")
 
 
-        except sqlite3.IntegrityError:
+        except (sqlite3.IntegrityError, psycopg2.IntegrityError):
             conn.close()
             return "This email is already registered."
 
@@ -520,6 +579,7 @@ def check_reminders():
         {"title": reminder["title"]}
         for reminder in due_reminders
     ])
+create_table()
+
 if __name__ == "__main__":
-    create_table()
     app.run(debug=True)
