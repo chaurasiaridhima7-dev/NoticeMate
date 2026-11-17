@@ -1,0 +1,58 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Notice - NoticeMate</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="add-notice">
+        <h2>Edit Notice</h2>
+
+        <form method="POST">
+
+            <label>Notice Title</label>
+            <input type="text" name="title"
+                   value="{{ notice.title }}" required>
+
+            <label>Description</label>
+            <textarea name="description"
+                      required>{{ notice.description }}</textarea>
+
+            <label>Category</label>
+            <select name="category" required>
+                <option value="assignment"
+                    {% if notice.category == 'assignment' %}selected{% endif %}>
+                    Assignment
+                </option>
+
+                <option value="examination"
+                    {% if notice.category == 'examination' %}selected{% endif %}>
+                    Examination
+                </option>
+
+                <option value="event"
+                    {% if notice.category == 'event' %}selected{% endif %}>
+                    Event
+                </option>
+
+                <option value="scholarship"
+                    {% if notice.category == 'scholarship' %}selected{% endif %}>
+                    Scholarship
+                </option>
+            </select>
+
+            <label>Deadline</label>
+            <input type="date" name="deadline"
+                   value="{{ notice.deadline }}">
+
+            <button type="submit">Save Changes</button>
+
+        </form>
+    </div>
+
+</body>
+</html>

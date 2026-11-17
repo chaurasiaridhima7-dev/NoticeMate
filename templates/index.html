@@ -1,0 +1,356 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoticeMate | Student Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="layout">
+
+    <aside class="sidebar">
+        <h2>NoticeMate</h2>
+        <p class="tagline">Smart Notice Management<
+
+
+<nav>
+    <a href="#" class="active" data-filter="all">Dashboard</a>
+    <a href="#" data-filter="all">All Notices</a>
+    <a href="#" data-filter="assignment">Assignments</a>
+    <a href="#" data-filter="examination">Examinations</a>
+    <a href="#" data-filter="event">Events</a>
+    <a href="#" data-filter="scholarship">Scholarships</a>
+    <a href="#" data-filter="reminders">Reminders</a>
+</nav>
+
+
+        <div class="sidebar-bottom">
+    <p>Welcome, {{ student_name }}!</p>
+    <p>Student Portal</p>
+    <a href="/logout">Logout</a>
+</div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="topbar">
+            <div>
+                <h1>Dashboard</h1>
+                <p>Welcome to your college notice centre.</p>
+            </div>
+            <div class="profile">Student</div>
+        </header>
+
+        <section class="welcome">
+            <h2>Stay updated. Stay organised.</h2>
+            <p>All your important college announcements in one place.</p>
+        </section>
+
+        <section class="stats">
+            <div class="stat-card">
+                <h3>Total Notices</h3>
+                <p>12</p>
+            </div>
+            <div class="stat-card">
+                <h3>Assignments</h3>
+                <p>04</p>
+            </div>
+            <div class="stat-card">
+                <h3>Upcoming Exams</h3>
+                <p>02</p>
+            </div>
+            <div class="stat-card">
+                <h3>Saved Notices</h3>
+                <p>05</p>
+            </div>
+        </section>
+
+
+<section class="add-notice">
+    <h2>Import WhatsApp Notice</h2>
+
+    <p>Copy a message from your college WhatsApp group and paste it below.</p>
+
+    <form action="/import_notice" method="POST">
+
+        <label>WhatsApp Message</label>
+
+        <textarea
+            name="message"
+            placeholder="Paste your WhatsApp message here..."
+            required></textarea>
+
+        <button type="submit">Import Notice</button>
+
+    </form>
+</section>
+
+        
+<section class="add-notice">
+    <h2>Add New Notice</h2>
+
+    <form action="/add_notice" method="POST">
+
+        <label>Notice Title</label>
+        <input type="text" name="title"
+               placeholder="Enter notice title" required>
+
+        <label>Description</label>
+        <textarea name="description"
+                  placeholder="Enter notice details"
+                  required></textarea>
+
+        <label>Category</label>
+        <select name="category" required>
+            <option value="">Select Category</option>
+            <option value="assignment">Assignment</option>
+            <option value="examination">Examination</option>
+            <option value="event">Event</option>
+            <option value="scholarship">Scholarship</option>
+        </select>
+
+        <label>Deadline (Optional)</label>
+        <input type="date" name="deadline">
+
+        <button type="submit">Add Notice</button>
+    </form>
+</section>
+
+
+</section>
+
+<!-- UPCOMING DEADLINES -->
+<section class="notices">
+
+    <div class="section-heading">
+        <h2>Upcoming Deadlines</h2>
+    </div>
+
+    {% for notice in notices %}
+        {% if notice.deadline %}
+
+            <div class="notice-card">
+                <span class="category">
+                    {{ notice.category|title }}
+                </span>
+
+                <h3>{{ notice.title }}</h3>
+
+                <p>Deadline: {{ notice.deadline }}</p>
+
+                {% if notice.deadline < today %}
+                    <strong style="color: #d93025;">Overdue</strong>
+                {% elif notice.deadline == today %}
+                    <strong style="color: #d97706;">Due Today</strong>
+                {% else %}
+                    <strong style="color: #188038;">Upcoming</strong>
+                {% endif %}
+            </div>
+
+        {% endif %}
+    {% endfor %}
+
+</section>
+
+
+<!-- RECENT NOTICES -->
+<section class="notices">
+
+    <div class="search-box">
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search notices by title or description..."
+        >
+    </div>
+
+    <div class="section-heading">
+        <h2>Recent Notices</h2>
+    </div>
+
+    {% for notice in notices %}
+
+        <div class="notice-card"
+             data-category="{{ notice.category }}"
+             data-deadline="{{ notice.deadline or '' }}"
+             data-reminder-set="{{ 'true' if notice.id in reminder_ids else 'false' }}">
+
+            <span class="category">
+                {{ notice.category|title }}
+            </span>
+
+            <h3>{{ notice.title }}</h3>
+
+            <p>{{ notice.description }}</p>
+
+            {% if notice.deadline %}
+
+                {% for reminder in reminders %}
+                    {% if reminder.notice_id == notice.id %}
+                        <p>Reminder Date: {{ reminder.reminder_date }}</p>
+                    {% endif %}
+                {% endfor %}
+
+                <form action="/set_reminder/{{ notice.id }}" method="POST">
+                    <button type="submit">Set Reminder</button>
+                </form>
+
+            {% endif %}
+
+            <form action="/delete_notice/{{ notice.id }}" method="POST">
+                <button type="submit">Delete Notice</button>
+            </form>
+
+            <a href="/edit_notice/{{ notice.id }}">
+                <button type="button">Edit Notice</button>
+            </a>
+
+        </div>
+
+    {% endfor %}
+
+</section>
+
+
+
+
+            <div class="notice-card"
+                data-category="assignment">
+                <span class="category">Assignment</span>
+                <h3>Data Structures Assignment</h3>
+                <p>Submit your assignment before 20 November 2026.</p>
+                <small>Deadline: 20 November 2026</small>
+ </div>
+
+            <div class="notice-card"
+            data-category="examination">
+                <span class="category exam">Examination</span>
+                <h3>Internal Examination Schedule</h3>
+                <p>The internal examination timetable has been announced.</p>
+                <small>Posted recently</small>
+            </div>
+
+            <div class="notice-card"
+            data-category="event">
+                <span class="category event">Event</span>
+                <h3>College Cultural Fest</h3>
+                <p>Registrations are open for the annual cultural fest.</p>
+                <small>Registration open</small>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+</body>
+
+<div class="notification-section">
+    <h3>Notifications</h3>
+    <button id="enableNotifications">
+        Enable Browser Notifications
+    </button>
+    <p id="notificationStatus"></p>
+    </div>
+
+<script>
+const links = document.querySelectorAll(".sidebar nav a");
+const notices = document.querySelectorAll(".notice-card");
+
+links.forEach(link => {
+    link.addEventListener("click", function(event) {
+        event.preventDefault();
+
+        const category = this.dataset.filter;
+
+        links.forEach(item => item.classList.remove("active"));
+        this.classList.add("active");
+
+        notices.forEach(notice => {
+           if (
+    category === "all" ||
+    (category === "reminders" && notice.dataset.reminderSet === "true") ||
+    (notice.dataset.category || "").trim().toLowerCase() === category.toLowerCase()
+) {
+                notice.style.display = "block";
+            } else {
+                notice.style.display = "none";
+            }
+        });
+    });
+});
+
+const searchInput = document.getElementById("searchInput");
+
+searchInput.addEventListener("input", function() {
+    const searchText = this.value.toLowerCase();
+
+    notices.forEach(notice => {
+        const noticeText = notice.textContent.toLowerCase();
+
+        if (noticeText.includes(searchText)) {
+            notice.style.display = "block";
+        } else {
+            notice.style.display = "none";
+        }
+    });
+});
+
+
+
+const enableButton = document.getElementById("enableNotifications");
+const notificationStatus = document.getElementById("notificationStatus");
+
+async function checkReminders() {
+    if (Notification.permission !== "granted") {
+        return;
+    }
+
+    try {
+        const response = await fetch("/check_reminders");
+        const reminders = await response.json();
+
+        reminders.forEach(reminder => {
+            new Notification("NoticeMate Reminder", {
+                body: "Your reminder is due: " + reminder.title
+            });
+        });
+
+    } catch (error) {
+        console.log("Could not check reminders:", error);
+    }
+}
+
+enableButton.addEventListener("click", async function() {
+
+    if (!("Notification" in window)) {
+        notificationStatus.textContent =
+            "Your browser does not support notifications.";
+        return;
+    }
+
+    const permission = await Notification.requestPermission();
+
+    if (permission === "granted") {
+        notificationStatus.textContent =
+            "Browser notifications enabled!";
+
+        checkReminders();
+
+        setInterval(checkReminders, 60000);
+
+    } else {
+        notificationStatus.textContent =
+            "Notification permission was not granted.";
+    }
+});
+
+
+
+</script>
+</body>
+</html>
+
+

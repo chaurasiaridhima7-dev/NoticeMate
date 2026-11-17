@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+notices.db
+.env
+venv/
+.venv/
+app_backup.py
+templates/index_backup.html
