@@ -50,23 +50,26 @@
         </section>
 
         <section class="stats">
-            <div class="stat-card">
-                <h3>Total Notices</h3>
-                <p>12</p>
-            </div>
-            <div class="stat-card">
-                <h3>Assignments</h3>
-                <p>04</p>
-            </div>
-            <div class="stat-card">
-                <h3>Upcoming Exams</h3>
-                <p>02</p>
-            </div>
-            <div class="stat-card">
-                <h3>Saved Notices</h3>
-                <p>05</p>
-            </div>
-        </section>
+    <div class="stat-card">
+        <h3>Total Notices</h3>
+        <p>{{ total_notices }}</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Assignments</h3>
+        <p>{{ assignment_count }}</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Upcoming Exams</h3>
+        <p>{{ upcoming_exam_count }}</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Saved Notices</h3>
+        <p>--</p>
+    </div>
+</section>
 
 
 <section class="add-notice">
@@ -217,29 +220,7 @@
 
 
 
-            <div class="notice-card"
-                data-category="assignment">
-                <span class="category">Assignment</span>
-                <h3>Data Structures Assignment</h3>
-                <p>Submit your assignment before 20 November 2026.</p>
-                <small>Deadline: 20 November 2026</small>
- </div>
-
-            <div class="notice-card"
-            data-category="examination">
-                <span class="category exam">Examination</span>
-                <h3>Internal Examination Schedule</h3>
-                <p>The internal examination timetable has been announced.</p>
-                <small>Posted recently</small>
-            </div>
-
-            <div class="notice-card"
-            data-category="event">
-                <span class="category event">Event</span>
-                <h3>College Cultural Fest</h3>
-                <p>Registrations are open for the annual cultural fest.</p>
-                <small>Registration open</small>
-            </div>
+            
         </section>
 
     </main>

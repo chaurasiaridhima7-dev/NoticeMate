@@ -136,13 +136,11 @@ def create_table():
     conn.commit()
     conn.close()
 
-
-
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
         name = request.form["name"]
-        email = request.form["email"]
+        email = request.form["email"].strip().lower()
         password = request.form["password"]
 
         hashed_password = generate_password_hash(password)
@@ -172,13 +170,13 @@ def signup():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form["email"]
+        email = request.form["email"].strip().lower()
         password = request.form["password"]
 
         conn = get_db()
 
         student = conn.execute(
-            "SELECT * FROM students WHERE email = ?",
+           "SELECT * FROM students WHERE LOWER(TRIM(email)) = ?",
             (email,)
         ).fetchone()
 
@@ -200,9 +198,6 @@ def login():
 def logout():
     session.clear()
     return redirect("/login")
-
-
-
 
 
 @app.route("/")
@@ -230,14 +225,32 @@ def home():
 
     today = date.today().isoformat()
 
+    total_notices = len(notices)
+
+    assignment_count = sum(
+        1 for notice in notices
+        if notice["category"].lower() == "assignment"
+    )
+
+    upcoming_exam_count = sum(
+        1 for notice in notices
+        if notice["category"].lower() == "examination"
+        and notice["deadline"]
+        and notice["deadline"] >= today
+    )
+
     return render_template(
         "index.html",
         notices=notices,
         today=today,
         reminder_ids=reminder_ids,
         reminders=reminders,
-        student_name=session["student_name"]
+        student_name=session["student_name"],
+        total_notices=total_notices,
+        assignment_count=assignment_count,
+        upcoming_exam_count=upcoming_exam_count
     )
+
 
 
 
@@ -583,3 +596,4 @@ create_table()
 
 if __name__ == "__main__":
     app.run(debug=True)
+    
